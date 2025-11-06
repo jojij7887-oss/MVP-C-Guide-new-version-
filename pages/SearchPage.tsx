@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { College, Course } from '../types';
-import { BuildingOfficeIcon, BookOpenIcon, SearchIcon } from '../components/icons';
+import { BuildingOfficeIcon, BookOpenIcon, SearchIcon, SparklesIcon } from '../components/icons';
+import { GoogleGenAI } from '@google/genai';
+
 
 // A new type to hold course data along with its parent college's info.
 interface CourseWithCollege extends Course {
@@ -49,6 +51,11 @@ interface SearchPageProps {
 
 const SearchPage: React.FC<SearchPageProps> = ({ colleges }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+
 
   // Memoize all courses for performance
   const allCourses: CourseWithCollege[] = useMemo(() => colleges.flatMap(college =>
@@ -79,6 +86,44 @@ const SearchPage: React.FC<SearchPageProps> = ({ colleges }) => {
   }, [allCourses, searchQuery]);
 
   const popularColleges = useMemo(() => colleges.filter(c => c.isFeatured), [colleges]);
+  
+    const handleAiSearch = async () => {
+        setIsAiLoading(true);
+        setAiError('');
+        setAiResponse('');
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const collegeDataString = JSON.stringify(colleges.map(c => ({
+                id: c.id,
+                name: c.name,
+                location: c.location,
+                courses: c.courses.map(course => ({
+                    id: course.id,
+                    name: course.name,
+                    fees: course.fees,
+                    duration: course.duration,
+                    eligibility: course.eligibility
+                }))
+            })));
+
+            const prompt = `You are a helpful college search assistant for an app called C-Guide. Based ONLY on the following college data, answer the user's query. Provide a concise, friendly, and conversational summary. Suggest specific colleges or courses that match the query, explaining why they are a good fit. Do not list all the data; instead, provide a helpful recommendation. If no colleges match, say so politely. Here is the available college data in JSON format: ${collegeDataString}. Now, please answer this user's query: "${aiQuery}"`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+
+            setAiResponse(response.text);
+
+        } catch (e) {
+            console.error(e);
+            setAiError('Sorry, something went wrong while searching with AI. Please check your connection or API key and try again.');
+        } finally {
+            setIsAiLoading(false);
+        }
+    };
+
 
   return (
     <div className="space-y-12">
@@ -100,6 +145,43 @@ const SearchPage: React.FC<SearchPageProps> = ({ colleges }) => {
           </div>
         </div>
       </section>
+
+       {/* AI Search Section */}
+        <section className="bg-indigo-50 p-6 rounded-xl border border-indigo-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <SparklesIcon className="h-6 w-6 text-indigo-600" />
+                AI-Powered Search
+            </h2>
+            <p className="text-gray-600 mb-4">
+                Ask a question in natural language, like "Find computer science courses with low fees" or "best arts colleges in Greenwood City".
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+                <textarea
+                    value={aiQuery}
+                    onChange={(e) => setAiQuery(e.target.value)}
+                    placeholder="e.g., recommend business schools..."
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    rows={2}
+                />
+                <button
+                    onClick={handleAiSearch}
+                    disabled={isAiLoading || !aiQuery}
+                    className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
+                >
+                    {isAiLoading ? 'Thinking...' : 'Search with AI'}
+                </button>
+            </div>
+
+            {/* AI Response Area */}
+            {isAiLoading && <p className="mt-4 text-center text-gray-600 animate-pulse">AI is thinking...</p>}
+            {aiError && <p className="mt-4 text-center text-red-600">{aiError}</p>}
+            {aiResponse && (
+                <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                    <h3 className="font-semibold text-gray-800 mb-2">AI Response:</h3>
+                    <p className="text-gray-700 whitespace-pre-wrap">{aiResponse}</p>
+                </div>
+            )}
+        </section>
 
       {searchQuery ? (
         <>
