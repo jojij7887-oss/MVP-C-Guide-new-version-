@@ -80,6 +80,7 @@ To keep our Docker image small, we'll ignore unnecessary files. Create `.dockeri
 docs
 Dockerfile
 nginx.conf
+vercel.json
 ```
 
 ### Step 2: Build and Push the Image to Artifact Registry
@@ -145,13 +146,30 @@ After a few moments, the command will output the URL of your deployed service. Y
 
 Vercel is a platform for frontend developers, providing an excellent workflow for deploying static sites and serverless functions directly from a Git repository.
 
-### Step 1: Push Project to GitHub
+### Step 1: Create a Vercel Configuration File
 
-1.  Initialize a Git repository if you haven't already:
+To ensure Vercel correctly identifies your project as a collection of static files without a build step, create a file named `vercel.json` in the root of your project with the following content:
+
+```json
+{
+  "builds": [
+    {
+      "src": "*",
+      "use": "@vercel/static"
+    }
+  ]
+}
+```
+
+This file explicitly tells Vercel to take all files (`*`) and serve them as static assets, which is exactly what our project requires.
+
+### Step 2: Push Project to GitHub
+
+1.  Initialize a Git repository if you haven't already and commit your new `vercel.json` file:
     ```bash
     git init
     git add .
-    git commit -m "Initial commit"
+    git commit -m "Add vercel.json for deployment"
     ```
 
 2.  Create a new repository on GitHub.
@@ -163,31 +181,31 @@ Vercel is a platform for frontend developers, providing an excellent workflow fo
     git push -u origin main
     ```
 
-### Step 2: Import Project on Vercel
+### Step 3: Import Project on Vercel
 
 1.  Sign up or log in to [Vercel](https://vercel.com) using your GitHub account.
 2.  From your Vercel dashboard, click "**Add New...**" -> "**Project**".
 3.  Find your GitHub repository and click "**Import**".
 
-### Step 3: Configure and Deploy
+### Step 4: Configure and Deploy
 
-Vercel will ask you to configure the project. Since our project doesn't have a standard `package.json` file, we need to provide some manual configuration.
+Because you added the `vercel.json` file, Vercel should automatically configure the project correctly.
 
-1.  **Framework Preset**: Select "**Other**".
+1.  **Framework Preset**: Vercel should detect the configuration and might not ask for a preset. If it does, select "**Other**".
 
 2.  **Build and Output Settings**:
-    -   **Build Command**: Leave this empty. Vercel will simply serve the files from your repository.
-    -   **Output Directory**: Leave this empty.
+    -   The `vercel.json` file handles this, so these fields should be left empty if they appear.
 
 3.  **Environment Variables**:
     -   This is the **most important step** for connecting to the Gemini API.
-    -   Add a new environment variable:
+    -   Expand the "Environment Variables" section.
+    -   Add a new variable:
         -   **Name**: `API_KEY`
         -   **Value**: Paste your Google Gemini API key here.
 
 4.  **Deploy**: Click the "**Deploy**" button.
 
-Vercel will now deploy your site. Once complete, you'll be given a public URL.
+Vercel will now deploy your site using the static file configuration. Once complete, you'll be given a public URL.
 
 ### Automatic Deployments
 
