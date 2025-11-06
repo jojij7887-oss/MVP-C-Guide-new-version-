@@ -1,30 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-t-8" />
+    <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>C Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
-  <script type="importmap">
+    
+    <!-- SystemJS for module loading and in-browser transpilation -->
+    <script src="https://unpkg.com/systemjs@6.14.3/dist/s.min.js"></script>
+    <script src="https://unpkg.com/systemjs-plugin-babel@0.0.25/plugin-babel.js"></script>
+    <script src="https://unpkg.com/systemjs-plugin-babel@0.0.25/systemjs-babel-build.js"></script>
+
+    <!-- Configure SystemJS with a single, consolidated importmap -->
+    <script type="systemjs-importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "jspdf": "https://aistudiocdn.com/jspdf@^3.0.3",
+        "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
+        "react-router": "https://aistudiocdn.com/react-router@^7.9.5",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
+      }
+    }
+    </script>
+    
+    <!-- Configure SystemJS to transpile TSX/TS files -->
+    <script>
+      System.config({
+        // Use the babel plugin to transpile files
+        transpiler: 'plugin-babel',
+        // Set babel options for different file types
+        meta: {
+          '*.tsx': {
+            babelOptions: {
+              react: true,
+              typescript: true
+            }
+          },
+          '*.ts': {
+             babelOptions: {
+              typescript: true
+            }
+          }
+        },
+        // Tell SystemJS how to resolve local files
+        packages: {
+          '/': {
+            main: 'index.tsx',
+            defaultExtension: 'tsx'
+          }
+        }
+      });
+    </script>
+
+<script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.1",
-    "@google/genai": "https://esm.run/@google/genai",
-    "jspdf": "https://esm.run/jspdf",
-    "react-router": "https://aistudiocdn.com/react-router@^7.9.5"
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
+    "jspdf": "https://aistudiocdn.com/jspdf@^3.0.3",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
   }
 }
 </script>
-<!-- Add Babel to transpile JSX/TSX in the browser -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
   <body class="bg-gray-50">
     <div id="root"></div>
-    <!-- The script type is changed to "text/babel" so the Babel script can find and transpile it -->
-    <script type="text/babel" data-type="module" src="/index.tsx"></script>
+    <!-- Use SystemJS to import and run the application -->
+    <script>
+      System.import('/index.tsx').catch(function(err) { console.error(err); });
+    </script>
   </body>
 </html>
